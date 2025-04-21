@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/loaders/GLTFLoader.js';
 
 // Global variables and game object containers
 let camera, scene, renderer, controls;
+let miniCam, miniRenderer; // <-- Declare minimap cam/renderer globally
 const objects = [];        // Array of target objects in the scene
 const bullets = [];        // Active bullets in the scene
 const walls = [];          // Array of wall meshes for collision
@@ -30,7 +31,11 @@ let instructionsElement;
 let health = 100; // Declare globally
 let healthEl;     // Declare globally
 let sfxShoot;
+let sfxFootsteps;
+let sfxHeavyFootsteps;
+let sfxEnemyMove;
 let bgm;
+let isMoving = false; // Track player movement state
 
 // Gameplay state
 let score = 0;             // Player's score (targets hit)
@@ -45,6 +50,13 @@ let moveRight = false;
 const velocity = new THREE.Vector3();   // Current velocity vector
 const direction = new THREE.Vector3();  // Movement direction vector
 const clock = new THREE.Clock();        // Clock for delta timing
+
+// Layer definitions
+const MAIN_LAYER = 0;
+const MINIMAP_LAYER = 1;
+const PLAYER_MARKER_LAYER = 2; // New layer for the player marker
+
+let playerMarker; // Global variable for the player marker
 
 // +++ Texture Loader +++
 const textureLoader = new THREE.TextureLoader();
@@ -87,6 +99,7 @@ function spawnEnemy(){
   e.position.set(cell.x,8,cell.z);
   e.userData={cellIndex:idx, speed:40};
   scene.add(e); enemies.push(e);
+  e.layers.set(MAIN_LAYER); // Add enemy to main layer (visible in minimap)
 }
 
 // Initialize the scene and start the render loop
@@ -102,6 +115,8 @@ function init() {
 
   // Set up a perspective camera
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.layers.enable(MAIN_LAYER);
+  camera.layers.disable(PLAYER_MARKER_LAYER); // Explicitly disable marker layer for main cam
 
   // Add hemisphere light for soft, ambient illumination
   const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
@@ -114,6 +129,7 @@ function init() {
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
+  floor.layers.set(MAIN_LAYER); // Add floor to main layer
 
   // === NEW TEXTURE FOR GROUND ===
   const groundTexture = textureLoader.load('textures/sand_stone_texture.png');
@@ -136,6 +152,7 @@ function init() {
   grid.material.opacity = 0.2;
   grid.material.transparent = true;
   scene.add(grid);
+  grid.layers.set(MINIMAP_LAYER); // <<< Grid only on minimap layer
   // Generate maze interior walls
   // (mazeRows, mazeCols, cellSize now globals)
   const wallHeight = 50;
@@ -231,6 +248,7 @@ function init() {
   const exitMesh = new THREE.Mesh(exitGeometry, exitMaterial);
   exitMesh.position.set(exitCell.x, 2.5, exitCell.z);
   scene.add(exitMesh);
+  exitMesh.layers.set(MAIN_LAYER); // Make exit visible in minimap
   // build vertical walls
   for (let r = 0; r < mazeRows; r++) {
     for (let c = 0; c <= mazeCols; c++) {
@@ -244,6 +262,7 @@ function init() {
         mesh.position.set(offsetX + c * cellSize, wallHeight / 2, offsetZ + r * cellSize + cellSize / 2);
         scene.add(mesh);
         walls.push(mesh);
+        mesh.layers.set(MAIN_LAYER); // Add wall to main layer
       }
     }
   }
@@ -263,6 +282,7 @@ function init() {
         mesh.position.set(offsetX + c * cellSize + cellSize / 2, wallHeight / 2, offsetZ + r * cellSize);
         scene.add(mesh);
         walls.push(mesh);
+        mesh.layers.set(MAIN_LAYER); // Add wall to main layer
       }
     }
   }
@@ -318,20 +338,24 @@ function init() {
     // *** Attach shoot listener AFTER locking controls ***
     document.addEventListener('click', shoot);
 
-    /* // <<< COMMENT OUT BGM PLAY
-    // *** Start BGM playback ***
-    if (bgm && bgm.paused) { // Check if it exists and is not already playing
+    // Start background ambient sounds
+    if (bgm && bgm.paused) {
       bgm.play().catch(error => {
         console.warn("Background music autoplay failed:", error);
       });
     }
-    */ // <<< END COMMENT OUT BGM PLAY
   });
   controls.addEventListener('unlock', () => {
       instructionsElement.style.display = '';
       instructionsElement.classList.remove('fade'); // Ensure fade class is removed if unlocking before timeout
       // *** Remove shoot listener WHEN unlocking ***
       document.removeEventListener('click', shoot);
+      
+      // Stop all sound effects when game is paused
+      if (sfxFootsteps && !sfxFootsteps.paused) sfxFootsteps.pause();
+      if (sfxEnemyMove && !sfxEnemyMove.paused) sfxEnemyMove.pause();
+      if (bgm && !bgm.paused) bgm.pause();
+      isMoving = false;
   });
   scene.add(controls.getObject());
   // Position player at maze entrance (upper-left cell)
@@ -401,23 +425,39 @@ function init() {
 
   // after renderer creation
   const mapSize = 200;
-  const miniCam = new THREE.OrthographicCamera(-1000,1000,1000,-1000,0.1,3000);
-  const miniRenderer = new THREE.WebGLRenderer({antialias:false,alpha:true});
+  const mapScope = mazeCols * cellSize * 0.6; // Adjust scope based on maze size + padding
+  miniCam = new THREE.OrthographicCamera(-mapScope, mapScope, mapScope, -mapScope, 0.1, 1000); // Adjusted bounds & near/far
+  miniCam.layers.enable(MAIN_LAYER); // Minimap camera sees the main layer
+  miniCam.layers.enable(PLAYER_MARKER_LAYER); // Minimap camera ALSO sees the marker layer
+  miniCam.up.set(0,0,-1); // Point camera's top towards negative Z
+
+  miniRenderer = new THREE.WebGLRenderer({antialias:false,alpha:true}); // <-- Initialize global var (remove const)
   miniRenderer.setSize(mapSize,mapSize);
   miniRenderer.domElement.style = 'position:absolute;bottom:10px;right:10px;border:2px solid #fff;';
   document.body.appendChild(miniRenderer.domElement);
 
   // *** Get Audio elements ***
   sfxShoot = document.getElementById('sfxShoot');
-  if (!sfxShoot) {
-      console.warn('Shoot sound effect element (sfxShoot) not found!');
-  }
-  /* // <<< COMMENT OUT BGM GET
+  sfxFootsteps = document.getElementById('sfxFootsteps');
+  sfxHeavyFootsteps = document.getElementById('sfxHeavyFootsteps');
+  sfxEnemyMove = document.getElementById('sfxEnemyMove');
   bgm = document.getElementById('bgm');
-  if (!bgm) {
-      console.warn('Background music element (bgm) not found!');
-  }
-  */ // <<< END COMMENT OUT BGM GET
+  
+  if (!sfxShoot) console.warn('Shoot sound effect element (sfxShoot) not found!');
+  if (!sfxFootsteps) console.warn('Footsteps sound effect element (sfxFootsteps) not found!');
+  if (!sfxHeavyFootsteps) console.warn('Heavy footsteps sound effect element (sfxHeavyFootsteps) not found!');
+  if (!sfxEnemyMove) console.warn('Enemy move sound effect element (sfxEnemyMove) not found!');
+  if (!bgm) console.warn('Background music element (bgm) not found!');
+
+  // Create player marker
+  const markerGeometry = new THREE.ConeGeometry(8, 15, 3); // Smaller cone
+  const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Bright yellow
+  playerMarker = new THREE.Mesh(markerGeometry, markerMaterial);
+  playerMarker.position.y = 0.1; // Slightly above the floor
+  playerMarker.rotation.x = Math.PI / 2; // Point cone along Z axis initially
+  scene.add(playerMarker);
+  // playerMarker.layers.set(MAIN_LAYER); // Marker should be visible in minimap
+  playerMarker.layers.set(PLAYER_MARKER_LAYER); // Put marker on its own layer
 }
 
 // Handle key down events to set movement flags
@@ -461,9 +501,11 @@ function shoot() {
   bullets.push(bullet);
 
   // Play sound effect
-  if (sfxShoot) { // Check if element exists before playing
-      sfxShoot.currentTime = 0; // quick restart
-      sfxShoot.play().catch(()=>{/*ignore potential errors*/});
+  if (sfxShoot) {
+    sfxShoot.currentTime = 0; // quick restart
+    sfxShoot.play().catch(error => {
+      console.warn("Shoot sound failed:", error);
+    });
   }
 }
 
@@ -480,9 +522,30 @@ function animate() {
 
   // Time elapsed since last frame
   const delta = clock.getDelta();
+  
   // Movement: calculate horizontal displacement and handle wall collisions
   direction.x = Number(moveRight) - Number(moveLeft);
   direction.z = Number(moveForward) - Number(moveBackward);
+  
+  // Handle footstep sounds based on movement
+  let currentlyMoving = direction.lengthSq() > 0;
+  
+  // Start or stop footstep sounds when movement state changes
+  if (currentlyMoving && !isMoving) {
+    // Player started moving - play footsteps
+    if (sfxFootsteps && sfxFootsteps.paused) {
+      sfxFootsteps.play().catch(e => console.warn("Footstep audio failed:", e));
+    }
+    isMoving = true;
+  } else if (!currentlyMoving && isMoving) {
+    // Player stopped moving - stop footsteps
+    if (sfxFootsteps && !sfxFootsteps.paused) {
+      sfxFootsteps.pause();
+      sfxFootsteps.currentTime = 0;
+    }
+    isMoving = false;
+  }
+  
   if (direction.lengthSq() > 0) {
     direction.normalize();
     const moveSpeed = 200;
@@ -543,6 +606,8 @@ function animate() {
       bullets.splice(i, 1);
       continue;
     }
+    
+    // Check collisions with target objects
     for (let j = objects.length - 1; j >= 0; j--) {
       const obj = objects[j];
       // Check collision with target objects
@@ -562,6 +627,37 @@ function animate() {
         break;
       }
     }
+    
+    // Skip if bullet was already removed by target collision
+    if (i >= bullets.length) continue;
+    
+    // Check collisions with enemies
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const enemy = enemies[j];
+      if (b.position.distanceTo(enemy.position) < 9) { // Enemy radius (8) + bullet radius (1)
+        // Play impact sound
+        if (sfxHeavyFootsteps) {
+          sfxHeavyFootsteps.currentTime = 0;
+          sfxHeavyFootsteps.play().catch(e => console.warn("Heavy footsteps audio failed:", e));
+        }
+        
+        // Free up the cell
+        if (enemy.userData.cellIndex !== undefined) {
+          freeCellIndices.push(enemy.userData.cellIndex);
+          freeCellIndices.sort((a, b) => a - b);
+        }
+        
+        // Remove enemy and spawn a new one
+        scene.remove(enemy);
+        enemies.splice(j, 1);
+        spawnEnemy();
+        
+        // Remove bullet
+        scene.remove(b);
+        bullets.splice(i, 1);
+        break;
+      }
+    }
   }
 
   // Check for exit condition
@@ -572,6 +668,12 @@ function animate() {
       controls.unlock();
       instructionsElement.innerHTML = '<h1>You Escaped!</h1><p>Click to restart</p>';
       instructionsElement.style.display = '';
+      
+      // Play success sound (using heavy footsteps as a victory sound)
+      if (sfxHeavyFootsteps) {
+        sfxHeavyFootsteps.currentTime = 0;
+        sfxHeavyFootsteps.play().catch(e => console.warn("Victory sound failed:", e));
+      }
     }
   }
 
@@ -579,19 +681,28 @@ function animate() {
   healthEl.style.background = `linear-gradient(to right,#0f0 ${health}%,#400 ${health}%)`;
 
   // Update enemies: movement and collision
-  for(let i=enemies.length-1;i>=0;i--){
-    const e=enemies[i];
+  let anyEnemyMoving = false;
+  
+  for(let i=enemies.length-1; i>=0; i--) {
+    const e = enemies[i];
     const playerPos = controls.getObject().position;
     const dir = playerPos.clone().sub(e.position).setY(0);
-    const dist=dir.length();
+    const dist = dir.length();
 
     // Check collision with player FIRST
     if(dist < (8 + 5)) { // Enemy radius 8 + Player radius 5 = 13
       hurt(10); // Damage the player
+      
+      // Play heavy footsteps for impact sound when hit
+      if (sfxHeavyFootsteps) {
+        sfxHeavyFootsteps.currentTime = 0;
+        sfxHeavyFootsteps.play().catch(e => console.warn("Heavy footsteps audio failed:", e));
+      }
+      
       // Free up the cell this enemy occupied
       if (e.userData.cellIndex !== undefined) {
           freeCellIndices.push(e.userData.cellIndex);
-          // Sort to potentially make finding free cells slightly more efficient later, though likely negligible impact
+          // Sort to potentially make finding free cells slightly more efficient later
           freeCellIndices.sort((a, b) => a - b);
       }
       // Remove enemy
@@ -601,7 +712,7 @@ function animate() {
       continue; // Skip movement logic for this removed enemy
     }
 
-    // Simple wall collision avoidance for enemies (optional but nice)
+    // Enemy movement logic
     const chaseSpeed = e.userData.speed * delta;
     if(dist < 500) { // Chase radius
         dir.normalize();
@@ -610,7 +721,7 @@ function animate() {
         let enemyCollision = false;
         const enemyRadius = 8; // Enemy sphere radius
 
-        // Simplified wall check for enemy (similar to player but maybe less precise)
+        // Check for wall collisions
         walls.forEach(wall => {
             const wallBox = new THREE.Box3().setFromObject(wall);
             const closestPoint = wallBox.clampPoint(nextPos, new THREE.Vector3());
@@ -621,10 +732,20 @@ function animate() {
 
         if (!enemyCollision) {
             e.position.copy(nextPos);
-        } else {
-            // Optional: Add slight random redirection if stuck?
-            // Or just stop movement towards the wall
+            anyEnemyMoving = true; // At least one enemy is moving
         }
+    }
+  }
+  
+  // Handle enemy movement sound
+  if (anyEnemyMoving) {
+    if (sfxEnemyMove && sfxEnemyMove.paused) {
+      sfxEnemyMove.play().catch(e => console.warn("Enemy move audio failed:", e));
+    }
+  } else {
+    if (sfxEnemyMove && !sfxEnemyMove.paused) {
+      sfxEnemyMove.pause();
+      sfxEnemyMove.currentTime = 0;
     }
   }
 
@@ -634,8 +755,20 @@ function animate() {
   // Render minimap if exists
   // Check if miniCam and miniRenderer are initialized before using them
   if (typeof miniCam !== 'undefined' && typeof miniRenderer !== 'undefined') {
-      miniCam.position.copy(controls.getObject().position).setY(1500); // Use controls position
-      miniCam.lookAt(controls.getObject().position);                   // Look at controls position
+      const playerPos = controls.getObject().position;
+      miniCam.position.copy(playerPos).setY(500); // Lowered Y even more
+      miniCam.lookAt(playerPos.x, 0, playerPos.z); // Look down at the player's XZ position
+      
+      // Update player marker position
+      playerMarker.position.x = playerPos.x;
+      playerMarker.position.z = playerPos.z;
+
+      // Update player marker rotation to match camera direction
+      const lookDirection = new THREE.Vector3();
+      camera.getWorldDirection(lookDirection);
+      playerMarker.rotation.z = Math.atan2(lookDirection.x, lookDirection.z); // Rotate around Y (up) axis
+
+      miniRenderer.clear(); // <-- Clear before rendering
       miniRenderer.render(scene, miniCam);
   }
 }
@@ -657,5 +790,9 @@ function die(){
   gameWon = true; // reuse end state toggle
   controls.unlock(); // This will trigger the unlock listener, showing instructions
   instructionsElement.innerHTML = '<h1>You Died!</h1><p>Click to restart</p>';
-  // The unlock listener already handles making instructions visible
+  
+  // Stop all sounds
+  if (sfxFootsteps && !sfxFootsteps.paused) sfxFootsteps.pause();
+  if (sfxEnemyMove && !sfxEnemyMove.paused) sfxEnemyMove.pause();
+  if (bgm && !bgm.paused) bgm.pause();
 }
