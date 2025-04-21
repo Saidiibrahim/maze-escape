@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Overview
+
+This project is a simple first-person shooter (FPS) game built with Three.js.
+
+-   **HTML Entry Point:** The main HTML structure, styles for UI elements (like the start screen, score display, crosshair), and the import map for Three.js modules are defined in [index.html](mdc:index.html).
+-   **Game Logic:** All the core game logic, including scene setup, maze generation, player controls (PointerLockControls), movement physics, shooting mechanics, target spawning, collision detection, and the main game loop (`animate`), resides in [main.js](mdc:main.js). It imports Three.js using the import map defined in the HTML.
