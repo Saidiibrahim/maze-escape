@@ -52,9 +52,10 @@ const direction = new THREE.Vector3();  // Movement direction vector
 const clock = new THREE.Clock();        // Clock for delta timing
 
 // Layer definitions
-const MAIN_LAYER = 0;
-const MINIMAP_LAYER = 1;
-const PLAYER_MARKER_LAYER = 2; // New layer for the player marker
+const MAIN_LAYER          = 0;
+const MINIMAP_LAYER       = 1;
+const PLAYER_MARKER_LAYER = 2;      // player cone
+const GROUND_LAYER        = 3;      // NEW – ground only, minimap ignores
 
 let playerMarker; // Global variable for the player marker
 
@@ -116,7 +117,8 @@ function init() {
   // Set up a perspective camera
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 2000);
   camera.layers.enable(MAIN_LAYER);
-  camera.layers.disable(PLAYER_MARKER_LAYER); // Explicitly disable marker layer for main cam
+  camera.layers.enable(GROUND_LAYER);      // NEW -> main view can still see floor
+  camera.layers.disable(PLAYER_MARKER_LAYER);
 
   // Add hemisphere light for soft, ambient illumination
   const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
@@ -129,7 +131,7 @@ function init() {
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
-  floor.layers.set(MAIN_LAYER); // Add floor to main layer
+  floor.layers.set(GROUND_LAYER);          // CHANGED – was MAIN_LAYER
 
   // === NEW TEXTURE FOR GROUND ===
   const groundTexture = textureLoader.load('textures/sand_stone_texture.png');
@@ -382,8 +384,8 @@ function init() {
       // gunModel.position.set(0.15, -0.3, -0.4); // Try moving left, further down, slightly back
       // gunModel.position.set(0.2, -0.25, -0.4); // Move slightly right, slightly up, keep distance
       gunModel.position.set(0.18, -0.23, -0.4); // Keep nudged position
-      // gunModel.rotation.set(0, 0, 0); // Reset rotation initially
-      gunModel.rotation.set(0, Math.PI * 0.95, 0); // Rotate clockwise to tilt gun slightly right
+      // Align gun model so it sits straight in the player's view (no cant)
+      gunModel.rotation.set(0, Math.PI, 0); // yaw 180° to face forward, no roll/pitch
       // --- End Adjustments ---
 
       // Ensure model materials render correctly if they use sRGB
@@ -429,12 +431,28 @@ function init() {
   miniCam = new THREE.OrthographicCamera(-mapScope, mapScope, mapScope, -mapScope, 0.1, 1000); // Adjusted bounds & near/far
   miniCam.layers.enable(MAIN_LAYER); // Minimap camera sees the main layer
   miniCam.layers.enable(PLAYER_MARKER_LAYER); // Minimap camera ALSO sees the marker layer
-  miniCam.up.set(0,0,-1); // Point camera's top towards negative Z
+  miniCam.up.set(0, 0, -1); // Point camera's top towards negative Z
 
-  miniRenderer = new THREE.WebGLRenderer({antialias:false,alpha:true}); // <-- Initialize global var (remove const)
-  miniRenderer.setSize(mapSize,mapSize);
-  miniRenderer.domElement.style = 'position:absolute;bottom:10px;right:10px;border:2px solid #fff;';
+  // --- MINIMAP RENDERER (make it pop!) ------------------------------------
+  // 1.  Turn OFF canvas transparency (alpha:false)
+  // 2.  Give the renderer a dedicated clear‑colour
+  // 3.  Mild CSS tweaks (rounded corners)
+  /**
+   * Minimap renderer:
+   * - alpha:false   → lets WebGL clear to an opaque colour
+   * - setClearColor → dark slate grey so ground doesn't bleed through
+   */
+  miniRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: false }); // << CHANGED (alpha:false)
+  miniRenderer.setClearColor(0x111111, 1); // << NEW (solid background)
+  miniRenderer.setSize(mapSize, mapSize);
+  miniRenderer.domElement.style.cssText = `
+    position:absolute;
+    bottom:10px;right:10px;
+    border:2px solid #fff;
+    border-radius:4px;           /* nicer rim                */
+  `;
   document.body.appendChild(miniRenderer.domElement);
+  // ------------------------------------------------------------------------
 
   // *** Get Audio elements ***
   sfxShoot = document.getElementById('sfxShoot');
