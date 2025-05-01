@@ -2,7 +2,7 @@
 // Import Three.js core, PointerLockControls, and GLTFLoader
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/controls/PointerLockControls.js';
-import { GLTFLoader } from 'three/loaders/GLTFLoader.js';
+// import { GLTFLoader } from 'three/loaders/GLTFLoader.js';
 
 // Global variables and game object containers
 let camera, scene, renderer, controls;
@@ -369,6 +369,7 @@ function init() {
 
   // +++ Load Realistic Gun Model +++
   // --- Remove comments to enable GLTF loading ---
+  /*
   const loader = new GLTFLoader();
   loader.load(
     'gun.glb', // <<< Make sure you have gun.glb in the correct path
@@ -405,6 +406,7 @@ function init() {
       // Maybe fall back to the primitive gun here if loading fails?
     }
   );
+  */
   // --- End GLTF loading section ---
   // +++ End Load Realistic Gun Model +++
 

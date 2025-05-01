@@ -1,70 +1,16 @@
 <!DOCTYPE html>
-<!-- HTML entry point for the Three.js FPS Game -->
+<!-- Landing page for Maze Escape -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Maze Escape</title>
-  <!-- Inline CSS for layout and instruction display -->
-  <style>
-    body { margin: 0; overflow: hidden; }
-    /* Full-screen start/game over overlay */
-    #instructions {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.85);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      z-index: 2;
-    }
-    #instructions h1 {
-      color: #00ff00;
-      font-family: 'Courier New', monospace;
-      font-size: 48px;
-      margin: 0 0 20px;
-      text-shadow: 0 0 10px #00ff00;
-    }
-    #instructions p {
-      color: #00ff00;
-      font-family: 'Courier New', monospace;
-      font-size: 24px;
-      margin: 5px 0;
-    }
-    /* Score display in the top-left corner */
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 18px;
-      z-index: 1;
-    }
-    /* Simple crosshair centered on screen */
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      margin-left: -10px;
-      margin-top: -10px;
-      border: 1px solid #fff;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 1;
-    }
-    #instructions ul{ list-style:none; padding:0; text-align:center;}
-    #instructions li{ color:#0f0; font:20px 'Courier New',monospace;}
-    #instructions.fade{ animation: fade 0.8s forwards;}
-    @keyframes fade{ from{opacity:1;} to{opacity:0;} }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Added viewport meta -->
+  <title>Maze Escape - FPS Action</title> <!-- Changed title -->
+  <!-- Google Font Import -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome for Icons (optional, but good for social links) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <!-- Import map to resolve module paths for three.js -->
   <script type="importmap">
   {
@@ -74,28 +20,400 @@
     }
   }
   </script>
+  <!-- Landing page style V3 -->
+  <style>
+    :root {
+      --bg-darkest: #0a0a0a; /* Even darker */
+      --bg-dark: #121212;
+      --bg-medium: #1e1e1e;
+      --bg-light: #2a2a2a;
+      --accent-green: #00ff99;
+      --accent-blue: #00ccff;
+      --accent-gold: #ffcc00;
+      --accent-red: #ff4d4d; /* Added for contrast */
+      --text-light: #f0f0f0; /* Slightly brighter */
+      --text-medium: #b0b0b0;
+      --text-dark: #1a1a1a;
+      --pixel-font: 'VT323', monospace;
+      --body-font: 'Roboto', sans-serif;
+      --nav-height: 70px; /* Define nav height */
+    }
+
+    * { /* Basic reset */
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+      font-family: var(--body-font);
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      line-height: 1.7;
+      padding-top: var(--nav-height); /* Prevent content from hiding behind fixed nav */
+      /* Removed grid background for a cleaner look, matching examples */
+    }
+
+    .container { /* Centering content */
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* --- Navigation --- */
+    nav {
+      background-color: var(--bg-darkest);
+      padding: 0 20px; /* Padding inside nav */
+      border-bottom: 3px solid var(--bg-light);
+      position: fixed; /* Sticky nav */
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo a {
+      font-family: var(--pixel-font);
+      font-size: 2.5em; /* Adjusted size */
+      color: var(--accent-green);
+      text-shadow: 0 0 8px var(--accent-green);
+      text-decoration: none;
+    }
+
+    nav ul {
+        list-style: none;
+        display: flex;
+        align-items: center;
+    }
+
+    nav ul li {
+        margin-left: 25px;
+    }
+
+    nav ul li a {
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    nav ul li a:hover,
+    nav ul li a.active { /* Active state */
+        background-color: var(--accent-green);
+        color: var(--text-dark);
+    }
+
+    /* --- Hero Section --- */
+    .hero {
+        /* background: var(--bg-medium) url('placeholder-hero.jpg') no-repeat center center/cover; REMOVED */
+        /* Fallback background if image fails */
+        background-color: var(--bg-medium);
+        height: 60vh; /* Slightly taller for canvas */
+        min-height: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-light);
+        position: relative; /* For overlay and canvas */
+        padding: 20px;
+        overflow: hidden; /* Contain the canvas */
+    }
+    #hero-canvas-container { /* Container for the Three.js canvas */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0; /* Behind the overlay and content */
+    }
+    .hero::before { /* Dark overlay for text contrast */
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1; /* Above canvas, below content */
+    }
+    .hero-content {
+        position: relative; /* To stay above overlay */
+        z-index: 2; /* Above overlay */
+        max-width: 700px;
+    }
+    .hero h1 {
+        font-family: var(--pixel-font);
+        font-size: 3.5em;
+        color: var(--accent-gold);
+        text-shadow: 0 0 8px var(--accent-gold);
+        margin-bottom: 15px;
+    }
+    .hero p {
+        font-size: 1.2em;
+        margin-bottom: 25px;
+        color: var(--text-light);
+    }
+
+    /* --- General Section Styling --- */
+    main {
+      padding: 40px 0; /* Vertical padding */
+      /* Removed background/border/shadow - sections will handle it */
+    }
+
+    section {
+        padding: 40px 0; /* Vertical padding for sections */
+        margin-bottom: 30px;
+    }
+
+    h2.section-title { /* More prominent section titles */
+      font-family: var(--pixel-font);
+      font-size: 3em;
+      color: var(--accent-blue);
+      text-align: center;
+      margin-bottom: 40px;
+      text-shadow: 0 0 6px var(--accent-blue);
+      border: none; /* Remove previous border */
+      letter-spacing: 2px;
+    }
+
+    /* --- Featured Game Section --- */
+    .featured-game {
+        background-color: var(--bg-medium); /* Give section distinct background */
+        padding-left: 40px; /* Keep horizontal padding */
+        padding-right: 40px; /* Keep horizontal padding */
+        border-radius: 8px; /* Optional rounding */
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+
+    .game-feature {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      background: none; /* Remove inner background */
+      padding: 0; /* Remove inner padding */
+      border: none; /* Remove inner border */
+    }
+
+    @media (min-width: 768px) {
+        .game-feature {
+            flex-direction: row;
+            text-align: left;
+            align-items: flex-start; /* Align items top */
+        }
+    }
+
+    .game-feature img {
+      max-width: 300px; /* Larger image */
+      width: 100%; /* Responsive within flex item */
+      height: auto;
+      border-radius: 8px;
+      border: 4px solid var(--bg-light);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .game-feature img:hover {
+        transform: scale(1.03);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    }
+    .game-info {
+        flex: 1; /* Allow info to take remaining space */
+    }
+    .game-info h3 {
+      font-family: var(--pixel-font);
+      font-size: 2.5em;
+      color: var(--accent-gold);
+      margin-bottom: 15px;
+      text-shadow: 0 0 4px var(--accent-gold);
+      margin-top: 0;
+    }
+    .game-info p {
+        font-size: 1.1em;
+        margin-bottom: 25px;
+        color: var(--text-light);
+    }
+    .play-button { /* Reusing for hero CTA too */
+      display: inline-block;
+      padding: 15px 35px;
+      background: linear-gradient(45deg, var(--accent-green), #00cc7a);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-weight: bold;
+      font-family: var(--pixel-font);
+      font-size: 1.5em; /* Larger font */
+      border: none;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 255, 153, 0.4);
+      text-shadow: none;
+      cursor: pointer;
+    }
+    .play-button:hover {
+      background: linear-gradient(45deg, #00cc7a, var(--accent-green));
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 255, 153, 0.6);
+    }
+
+    /* --- News Section --- */
+    .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+        gap: 30px;
+    }
+    .news-card {
+        background-color: var(--bg-medium);
+        border-radius: 8px;
+        overflow: hidden; /* Ensure image corners are rounded */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid var(--bg-light);
+    }
+    .news-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
+    }
+    .news-card img { /* Placeholder for news images */
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        background-color: var(--bg-light); /* Placeholder color */
+        display: block; /* Remove extra space below image */
+        border-bottom: 3px solid var(--accent-blue);
+    }
+    .news-content {
+        padding: 20px;
+    }
+    .news-content h4 {
+        font-family: var(--pixel-font);
+        font-size: 1.5em;
+        color: var(--accent-gold);
+        margin-bottom: 10px;
+    }
+    .news-content p {
+        font-size: 0.95em;
+        color: var(--text-medium);
+        margin-bottom: 15px;
+    }
+    .read-more {
+        color: var(--accent-green);
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    .read-more:hover {
+        text-decoration: underline;
+    }
+
+
+    /* --- About Section --- */
+    .about-us {
+        background-color: var(--bg-medium);
+        padding: 40px;
+        border-radius: 8px;
+        text-align: center;
+    }
+     .about-us h2 {
+        margin-bottom: 20px;
+     }
+    .about-us p {
+        max-width: 700px;
+        margin: 0 auto;
+        color: var(--text-light);
+        font-size: 1.1em;
+    }
+
+    /* --- Footer --- */
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 40px 20px;
+      font-size: 1em;
+      color: var(--text-medium);
+      border-top: 3px solid var(--bg-light);
+      background-color: var(--bg-darkest);
+    }
+    .social-links {
+        margin-bottom: 15px; /* Space between links and copyright */
+    }
+    .social-links a {
+        color: var(--accent-green);
+        text-decoration: none;
+        margin: 0 12px;
+        font-size: 1.5em; /* Larger icons */
+        transition: color 0.3s ease, transform 0.3s ease;
+        display: inline-block; /* Allows transform */
+    }
+    .social-links a:hover {
+        color: var(--text-light);
+        transform: scale(1.2); /* Grow effect */
+    }
+  </style>
 </head>
 <body>
-  <!-- Instruction overlay shown before the game starts -->
-  <div id="instructions">
-    <h1>Maze Escape</h1>
+
+  <nav>
+    <div class="logo">
+        <a href="index.html">Maze Escape</a> <!-- Changed logo text -->
+    </div>
     <ul>
-      <li>WASD = move</li><li>Mouse = look</li><li>Click = shoot</li>
+      <li><a href="#featured" class="active">Game Info</a></li> <!-- Changed text -->
+      <li><a href="game.html">Play Now</a></li> <!-- Direct play link -->
+      <!-- Removed News and About links -->
     </ul>
-    <p>Click anywhere to start</p>
-  </div>
-  <!-- HUD elements: score and crosshair -->
-  <div id="score">Score: 0</div>
-  <div id="crosshair"></div>
-  
-  <!-- Audio elements -->
-  <audio id="sfxShoot" src="audio/shoot.mp3" preload="auto"></audio>
-  <audio id="sfxFootsteps" src="audio/footsteps.wav" preload="auto" loop></audio>
-  <audio id="sfxHeavyFootsteps" src="audio/heavy_footsteps.wav" preload="auto"></audio>
-  <audio id="sfxEnemyMove" src="audio/enemy_move.mp3" preload="auto" loop></audio>
-  <audio id="bgm" src="audio/background.mp3" loop></audio>
-  
-  <!-- Main game script module -->
-  <script type="module" src="./main.js"></script>
+  </nav>
+
+  <section class="hero">
+    <div id="hero-canvas-container"></div> <!-- Canvas will be added here by JS -->
+    <!-- Background image set in CSS -->
+    <div class="hero-content">
+      <h1>Maze Escape</h1>
+      <p>Procedurally generated chaos. Lock, load, and find the exit.</p>
+      <a href="game.html" class="play-button">Launch Game</a> <!-- Added another play button -->
+    </div>
+  </section>
+
+  <main class="container"> <!-- Wrap main content in container -->
+
+    <section id="featured" class="featured-game"> <!-- Added ID for nav link -->
+        <!-- Removed h2 title, hero serves that purpose -->
+        <div class="game-feature">
+          <img src="static/images/game_image.png" alt="Maze Escape Game Screenshot"> <!-- Updated image source and alt text -->
+          <div class="game-info">
+            <h3>The Premise</h3> <!-- Changed heading -->
+            <p>Dive into an ever-changing labyrinth filled with deadly traps and relentless foes. Each run is unique, demanding quick reflexes and sharp shooting. Can you survive the maze?</p>
+            <!-- Play button moved to hero, could add secondary CTA here if needed -->
+            <a href="game.html" class="play-button">Launch Game</a> <!-- Added another play button -->
+          </div>
+        </div>
+    </section>
+
+    <!-- Removed News Section -->
+    <!-- Removed About Section -->
+
+  </main>
+
+  <footer>
+    <!-- Optional: Could add game-specific links or remove social links -->
+    <div class="social-links">
+        <!-- Using Font Awesome icons - Kept for now, could be removed -->
+        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="#" title="Itch.io"><i class="fab fa-itch-io"></i></a>
+        <a href="#" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+    </div>
+    <p>&copy; 2024 Maze Escape. Find the Exit.</p> <!-- Updated copyright -->
+  </footer>
+
+  <!-- Script for landing page animations -->
+  <script type="module" src="./landing.js"></script>
+
 </body>
 </html>
