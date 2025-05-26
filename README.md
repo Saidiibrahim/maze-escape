@@ -4,6 +4,15 @@ This is a first-person shooter game built with [Three.js](https://threejs.org/).
 
 ## How to Run
 
+### Option 1: Using VS Code Live Server (Recommended)
+1. Download or clone the project.
+2. Open the project folder in VS Code.
+3. Install the "Live Server" extension if you haven't already.
+4. Right-click on `index.html` and select "Open with Live Server".
+5. You'll see the landing page - click "Play Now" to launch the game.
+6. On the game page, click anywhere on the start screen to lock the pointer and begin playing.
+
+### Option 2: Using Command Line
 1. Download or clone the project.
 2. Ensure you have a local HTTP server that can serve the files. If you have Node.js, you can use:
    ```bash
@@ -14,7 +23,8 @@ This is a first-person shooter game built with [Three.js](https://threejs.org/).
    python -m http.server
    ```
 3. Open your browser and navigate to the local address provided by your server (e.g., `http://localhost:8080` or `http://127.0.0.1:8000`).
-4. Click the start screen to lock the pointer and begin.
+4. You'll see the landing page - click "Play Now" to launch the game.
+5. On the game page, click anywhere on the start screen to lock the pointer and begin playing.
 
 ## Gameplay
 
