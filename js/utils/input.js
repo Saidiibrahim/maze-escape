@@ -1,5 +1,6 @@
 // js/utils/input.js
 // Handles keyboard (WASD movement) and mouse (Pointer Lock for shooting) input.
+import { toggleMultiplayerPanel } from '../ui/multiplayerUI.js';
 
 let moveForward = false;
 let moveBackward = false;
@@ -45,6 +46,10 @@ function onKeyDown(event) {
     case 'KeyD':
     case 'ArrowRight':
       moveRight = true;
+      break;
+    case 'KeyM':
+      // Toggle multiplayer panel
+      toggleMultiplayerPanel();
       break;
   }
 }

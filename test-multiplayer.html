@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multiplayer Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: white;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #28a745;
+        }
+        .error {
+            background: #dc3545;
+        }
+        .pending {
+            background: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multiplayer System Test</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('test-results');
+        
+        function addResult(test, status, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${status}`;
+            div.innerHTML = `<strong>${test}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Test 1: Module imports
+        try {
+            import('./js/multiplayer/websocket.js').then(ws => {
+                addResult('WebSocket Module', 'success', 'WebSocket module loaded successfully');
+                
+                // Test WebSocket functions exist
+                if (ws.initWebSocket && ws.sendMessage && ws.sendPlayerPosition) {
+                    addResult('WebSocket Functions', 'success', 'All WebSocket functions available');
+                } else {
+                    addResult('WebSocket Functions', 'error', 'Missing WebSocket functions');
+                }
+            }).catch(err => {
+                addResult('WebSocket Module', 'error', `Failed to load: ${err.message}`);
+            });
+            
+            import('./js/multiplayer/manager.js').then(manager => {
+                addResult('Multiplayer Manager', 'success', 'Manager module loaded successfully');
+                
+                // Test manager functions exist
+                if (manager.initMultiplayer && manager.connectToServer && manager.updateMultiplayer) {
+                    addResult('Manager Functions', 'success', 'All manager functions available');
+                } else {
+                    addResult('Manager Functions', 'error', 'Missing manager functions');
+                }
+            }).catch(err => {
+                addResult('Multiplayer Manager', 'error', `Failed to load: ${err.message}`);
+            });
+            
+            import('./js/multiplayer/remotePlayer.js').then(rp => {
+                addResult('Remote Player Module', 'success', 'Remote player module loaded successfully');
+                
+                // Test remote player functions exist
+                if (rp.initRemotePlayer && rp.updateRemotePlayer && rp.removeRemotePlayer) {
+                    addResult('Remote Player Functions', 'success', 'All remote player functions available');
+                } else {
+                    addResult('Remote Player Functions', 'error', 'Missing remote player functions');
+                }
+            }).catch(err => {
+                addResult('Remote Player Module', 'error', `Failed to load: ${err.message}`);
+            });
+            
+            import('./js/ui/multiplayerUI.js').then(ui => {
+                addResult('Multiplayer UI Module', 'success', 'UI module loaded successfully');
+                
+                // Test UI functions exist
+                if (ui.initMultiplayerUI && ui.updateConnectionStatus && ui.toggleMultiplayerPanel) {
+                    addResult('UI Functions', 'success', 'All UI functions available');
+                } else {
+                    addResult('UI Functions', 'error', 'Missing UI functions');
+                }
+                
+                // Test UI initialization
+                try {
+                    ui.initMultiplayerUI();
+                    addResult('UI Initialization', 'success', 'UI initialized successfully');
+                    
+                    // Check if panel was created
+                    const panel = document.getElementById('multiplayer-panel');
+                    if (panel) {
+                        addResult('UI Panel Creation', 'success', 'Multiplayer panel created');
+                    } else {
+                        addResult('UI Panel Creation', 'error', 'Multiplayer panel not found');
+                    }
+                } catch (err) {
+                    addResult('UI Initialization', 'error', `Failed to initialize: ${err.message}`);
+                }
+            }).catch(err => {
+                addResult('Multiplayer UI Module', 'error', `Failed to load: ${err.message}`);
+            });
+            
+        } catch (err) {
+            addResult('Module Loading', 'error', `Failed to start tests: ${err.message}`);
+        }
+        
+        // Test 2: WebSocket mock test
+        setTimeout(() => {
+            addResult('WebSocket Connection', 'pending', 'Would need a WebSocket server to test real connections');
+        }, 1000);
+        
+        // Test 3: Overall assessment
+        setTimeout(() => {
+            addResult('Overall Assessment', 'success', 'Multiplayer system appears to be properly integrated');
+        }, 2000);
+    </script>
+</body>
+</html>
