@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { initWebSocket, sendPlayerPosition, sendPlayerShot, joinRoom, closeWebSocket, isConnected, getPlayerId } from './websocket.js';
-import { initRemotePlayer, updateRemotePlayer, removeRemotePlayer, getRemotePlayers } from './remotePlayer.js';
+import { initRemotePlayer, updateRemotePlayer, removeRemotePlayer as removeRemotePlayerEntity, getRemotePlayers } from './remotePlayer.js';
 
 let _scene = null;
 let _isMultiplayer = false;
@@ -109,8 +109,14 @@ export function updateMultiplayer(localPlayerData) {
     
     const now = Date.now();
     if (now - _lastPositionUpdate > _positionUpdateInterval) {
-        sendPlayerPosition(localPlayerData.position, localPlayerData.rotation);
-        _lastPositionUpdate = now;
+        try {
+            const success = sendPlayerPosition(localPlayerData.position, localPlayerData.rotation);
+            if (success) {
+                _lastPositionUpdate = now;
+            }
+        } catch (error) {
+            console.error('Failed to send position update:', error);
+        }
     }
 }
 
@@ -122,7 +128,11 @@ export function updateMultiplayer(localPlayerData) {
 export function notifyPlayerShot(position, direction) {
     if (!_isMultiplayer || !isConnected()) return;
     
-    sendPlayerShot(position, direction);
+    try {
+        sendPlayerShot(position, direction);
+    } catch (error) {
+        console.error('Failed to send shot notification:', error);
+    }
 }
 
 /**
@@ -170,7 +180,7 @@ function handleRemotePlayerShot(data) {
 function removeRemotePlayer(playerId) {
     const remotePlayer = _remotePlayers.get(playerId);
     if (remotePlayer) {
-        removeRemotePlayer(remotePlayer);
+        removeRemotePlayerEntity(remotePlayer);
         _remotePlayers.delete(playerId);
         console.log(`Removed remote player: ${playerId}`);
     }
@@ -181,7 +191,7 @@ function removeRemotePlayer(playerId) {
  */
 function clearRemotePlayers() {
     _remotePlayers.forEach((remotePlayer, playerId) => {
-        removeRemotePlayer(remotePlayer);
+        removeRemotePlayerEntity(remotePlayer);
     });
     _remotePlayers.clear();
 }

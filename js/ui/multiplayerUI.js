@@ -138,6 +138,47 @@ function setupEventListeners() {
 }
 
 /**
+ * Validates input fields
+ * @param {string} serverUrl - Server URL
+ * @param {string} roomId - Room ID
+ * @param {string} playerName - Player name
+ * @returns {string|null} Error message or null if valid
+ */
+function validateInputs(serverUrl, roomId, playerName) {
+    if (!serverUrl || !roomId || !playerName) {
+        return 'Please fill in all fields';
+    }
+    
+    // Validate WebSocket URL format
+    try {
+        const url = new URL(serverUrl);
+        if (!['ws:', 'wss:'].includes(url.protocol)) {
+            return 'Server URL must use ws:// or wss:// protocol';
+        }
+    } catch (error) {
+        return 'Invalid server URL format';
+    }
+    
+    // Validate room ID
+    const roomIdPattern = /^[a-zA-Z0-9_-]+$/;
+    if (roomId.length < 1 || roomId.length > 50 || !roomIdPattern.test(roomId)) {
+        return 'Room ID must be 1-50 characters, letters/numbers/hyphens/underscores only';
+    }
+    
+    // Validate player name
+    if (playerName.length < 1 || playerName.length > 30) {
+        return 'Player name must be 1-30 characters';
+    }
+    
+    // Check for dangerous characters in player name
+    if (/<[^>]*>|[<>'"&]/.test(playerName)) {
+        return 'Player name contains invalid characters';
+    }
+    
+    return null;
+}
+
+/**
  * Handles connect button click
  */
 function handleConnect() {
@@ -145,8 +186,9 @@ function handleConnect() {
     const roomId = _roomIdInput.value.trim();
     const playerName = _playerNameInput.value.trim();
 
-    if (!serverUrl || !roomId || !playerName) {
-        alert('Please fill in all fields');
+    const validationError = validateInputs(serverUrl, roomId, playerName);
+    if (validationError) {
+        alert(validationError);
         return;
     }
 

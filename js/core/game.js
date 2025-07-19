@@ -26,7 +26,7 @@ import { initAudio, playSound, stopSound, stopAllSounds, SOUND_KEYS } from '../u
 import { checkSphereWallCollision } from '../utils/collision.js'; // Might use later if needed directly here
 
 // Multiplayer
-import { initMultiplayer, updateMultiplayer, notifyPlayerShot, isMultiplayer } from '../multiplayer/manager.js';
+import { initMultiplayer, updateMultiplayer, notifyPlayerShot, isMultiplayer, getRemotePlayersMap } from '../multiplayer/manager.js';
 import { updateNameTags } from '../multiplayer/remotePlayer.js';
 
 // Game state variables
@@ -268,6 +268,10 @@ function animate() {
                 position: { x: playerPos.x, y: playerPos.y, z: playerPos.z },
                 rotation: { x: direction.x, y: direction.y, z: direction.z }
             });
+            
+            // Update name tags to face camera
+            const remotePlayers = Array.from(getRemotePlayersMap().values());
+            updateNameTags(remotePlayers, camera);
         }
 
         // 4. Check Game State
