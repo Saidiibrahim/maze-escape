@@ -18,11 +18,16 @@ import { createMaze } from '../world/maze.js';
 // UI
 import { initHUD, updateScore, updateHealth, showInstructionsMessage } from '../ui/hud.js';
 import { initMinimap, updateMinimap, cleanupMinimap } from '../ui/minimap.js';
+import { initMultiplayerUI, updateConnectionStatus, updatePlayerCount, showConnectionError } from '../ui/multiplayerUI.js';
 
 // Utils
 import { initInput, getMovementState } from '../utils/input.js';
 import { initAudio, playSound, stopSound, stopAllSounds, SOUND_KEYS } from '../utils/audio.js';
 import { checkSphereWallCollision } from '../utils/collision.js'; // Might use later if needed directly here
+
+// Multiplayer
+import { initMultiplayer, updateMultiplayer, notifyPlayerShot, isMultiplayer, getRemotePlayersMap } from '../multiplayer/manager.js';
+import { updateNameTags } from '../multiplayer/remotePlayer.js';
 
 // Game state variables
 let scene, camera, renderer, clock, textureLoader;
@@ -61,6 +66,7 @@ export function initGame() {
 
     // --- UI Initialization ---
     hudElements = initHUD(); // Get references to score/health elements
+    initMultiplayerUI(); // Initialize multiplayer UI
 
     // --- Environment Setup ---
     const { wallTexture, wallMaterial } = setupEnvironment(scene, textureLoader);
@@ -107,6 +113,30 @@ export function initGame() {
     // --- Audio Setup ---
     initAudio();
 
+    // --- Multiplayer Setup ---
+    initMultiplayer(scene, {
+        onConnected: () => {
+            console.log("Connected to multiplayer");
+            updateConnectionStatus(true);
+        },
+        onDisconnected: () => {
+            console.log("Disconnected from multiplayer");
+            updateConnectionStatus(false);
+        },
+        onPlayerJoined: (data) => {
+            console.log("Player joined:", data.playerName);
+            // Update player count if available
+        },
+        onPlayerLeft: (data) => {
+            console.log("Player left:", data.playerName);
+            // Update player count if available
+        },
+        onError: (error) => {
+            console.error("Multiplayer error:", error);
+            showConnectionError(error.message || "Connection failed");
+        }
+    });
+
     // --- Event Listeners ---
     window.addEventListener('resize', onWindowResize);
 
@@ -141,6 +171,14 @@ function onWindowResize() {
 
 function handleShoot() {
     shootBullet(camera);
+    
+    // Notify multiplayer system about the shot
+    if (isMultiplayer()) {
+        const playerPos = getPlayerPosition();
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        notifyPlayerShot(playerPos, direction);
+    }
 }
 
 function handleEnemyPlayerCollision(damageAmount) {
@@ -221,14 +259,29 @@ function animate() {
             onEnemyHit: handleEnemyHit
         });
 
-        // 3. Check Game State
+        // 3. Update Multiplayer
+        if (isMultiplayer()) {
+            const playerPos = getPlayerPosition();
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            updateMultiplayer({
+                position: { x: playerPos.x, y: playerPos.y, z: playerPos.z },
+                rotation: { x: direction.x, y: direction.y, z: direction.z }
+            });
+            
+            // Update name tags to face camera
+            const remotePlayers = Array.from(getRemotePlayersMap().values());
+            updateNameTags(remotePlayers, camera);
+        }
+
+        // 4. Check Game State
         checkWinCondition();
     }
 
-    // 4. Render Main Scene
+    // 5. Render Main Scene
     renderer.render(scene, camera);
 
-    // 5. Update & Render Minimap (always update to show player marker)
+    // 6. Update & Render Minimap (always update to show player marker)
     if (minimapElements.miniCam) { // Check if minimap is initialized
          updateMinimap(getPlayerPosition(), scene, camera);
     }
