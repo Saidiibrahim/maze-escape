@@ -51,6 +51,7 @@
       color: var(--text-light);
       line-height: 1.7;
       padding-top: var(--nav-height); /* Prevent content from hiding behind fixed nav */
+      scroll-behavior: smooth;
       /* Removed grid background for a cleaner look, matching examples */
     }
 
@@ -147,18 +148,76 @@
         position: relative; /* To stay above overlay */
         z-index: 2; /* Above overlay */
         max-width: 700px;
+        animation: fadeInUp 1s ease-out;
     }
     .hero h1 {
         font-family: var(--pixel-font);
-        font-size: 3.5em;
+        font-size: 4.5em;
         color: var(--accent-gold);
-        text-shadow: 0 0 8px var(--accent-gold);
-        margin-bottom: 15px;
+        text-shadow: 0 0 12px var(--accent-gold), 0 0 24px var(--accent-gold);
+        margin-bottom: 20px;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 3em;
+        }
+    }
+    @media (max-width: 480px) {
+        .hero h1 {
+            font-size: 2.2em;
+        }
     }
     .hero p {
-        font-size: 1.2em;
-        margin-bottom: 25px;
+        font-size: 1.4em;
+        margin-bottom: 30px;
         color: var(--text-light);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .hero-subtitle {
+        font-size: 1.1em;
+        color: var(--accent-green);
+        margin-bottom: 35px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: bold;
+    }
+    @keyframes glow {
+        from { text-shadow: 0 0 12px var(--accent-gold), 0 0 24px var(--accent-gold); }
+        to { text-shadow: 0 0 16px var(--accent-gold), 0 0 32px var(--accent-gold); }
+    }
+    @keyframes fadeInUp {
+        from { 
+            opacity: 0; 
+            transform: translateY(30px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+    @keyframes slideInLeft {
+        from { 
+            opacity: 0; 
+            transform: translateX(-30px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateX(0); 
+        }
+    }
+    @keyframes slideInRight {
+        from { 
+            opacity: 0; 
+            transform: translateX(30px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateX(0); 
+        }
     }
 
     /* --- General Section Styling --- */
@@ -191,6 +250,7 @@
         border-radius: 8px; /* Optional rounding */
         margin-top: 40px;
         margin-bottom: 40px;
+        animation: slideInLeft 1s ease-out 0.3s both;
     }
 
     .game-feature {
@@ -255,11 +315,29 @@
       box-shadow: 0 4px 10px rgba(0, 255, 153, 0.4);
       text-shadow: none;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .play-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+    .play-button:hover::before {
+      left: 100%;
     }
     .play-button:hover {
       background: linear-gradient(45deg, #00cc7a, var(--accent-green));
       transform: scale(1.05) translateY(-2px);
       box-shadow: 0 6px 15px rgba(0, 255, 153, 0.6);
+    }
+    .play-button:active {
+      transform: scale(0.98) translateY(0);
     }
 
     /* --- News Section --- */
@@ -313,21 +391,79 @@
     }
 
 
-    /* --- About Section --- */
-    .about-us {
+    /* --- Game Features Section --- */
+    .game-features {
         background-color: var(--bg-medium);
         padding: 40px;
         border-radius: 8px;
-        text-align: center;
+        margin-top: 40px;
+        animation: slideInRight 1s ease-out 0.6s both;
     }
-     .about-us h2 {
-        margin-bottom: 20px;
-     }
-    .about-us p {
-        max-width: 700px;
-        margin: 0 auto;
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    @media (max-width: 768px) {
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .feature-card {
+            padding: 20px;
+        }
+        .game-features {
+            padding: 20px;
+        }
+        .featured-game {
+            padding: 20px;
+        }
+    }
+    .feature-card {
+        background-color: var(--bg-light);
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        border: 2px solid var(--bg-dark);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: 0 8px 25px rgba(0, 255, 153, 0.2);
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 153, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    .feature-card:hover::before {
+        left: 100%;
+    }
+    .feature-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 153, 0.5));
+    }
+    .feature-card h4 {
+        font-family: var(--pixel-font);
+        font-size: 1.8em;
+        color: var(--accent-gold);
+        margin-bottom: 15px;
+        text-shadow: 0 0 4px var(--accent-gold);
+    }
+    .feature-card p {
         color: var(--text-light);
-        font-size: 1.1em;
+        font-size: 1em;
+        line-height: 1.6;
     }
 
     /* --- Footer --- */
@@ -375,23 +511,58 @@
     <!-- Background image set in CSS -->
     <div class="hero-content">
       <h1>Maze Escape</h1>
-      <p>Procedurally generated chaos. Lock, load, and find the exit.</p>
-      <a href="game.html" class="play-button">Launch Game</a> <!-- Added another play button -->
+      <div class="hero-subtitle">First-Person Survival Action</div>
+      <p>Navigate through procedurally generated mazes filled with hostile enemies. Use your weapon to clear a path and find the exit before your health runs out.</p>
+      <a href="game.html" class="play-button">Launch Game</a>
     </div>
   </section>
 
   <main class="container"> <!-- Wrap main content in container -->
 
-    <section id="featured" class="featured-game"> <!-- Added ID for nav link -->
-        <!-- Removed h2 title, hero serves that purpose -->
+    <section id="featured" class="featured-game">
         <div class="game-feature">
-          <img src="static/images/game_image.png" alt="Maze Escape Game Screenshot"> <!-- Updated image source and alt text -->
+          <img src="static/images/game_image.png" alt="Maze Escape Game Screenshot">
           <div class="game-info">
-            <h3>The Premise</h3> <!-- Changed heading -->
-            <p>Dive into an ever-changing labyrinth filled with deadly traps and relentless foes. Each run is unique, demanding quick reflexes and sharp shooting. Can you survive the maze?</p>
-            <!-- Play button moved to hero, could add secondary CTA here if needed -->
-            <a href="game.html" class="play-button">Launch Game</a> <!-- Added another play button -->
+            <h3>Survival Challenge</h3>
+            <p>Every maze is different. Navigate through procedurally generated labyrinths where enemies patrol the corridors and targets challenge your aim. Master the controls, conserve your health, and find the exit before time runs out.</p>
+            <a href="game.html" class="play-button">Start Playing</a>
           </div>
+        </div>
+    </section>
+
+    <section class="game-features">
+        <h2 class="section-title">Game Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h4>Weapon Combat</h4>
+                <p>Use your equipped weapon to eliminate enemies and destroy targets. Precise aiming and quick reflexes are essential for survival.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏃</div>
+                <h4>First-Person Movement</h4>
+                <p>Experience immersive FPS controls with WASD movement and mouse look. Navigate tight corridors and open spaces with fluid motion.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h4>Procedural Mazes</h4>
+                <p>Each playthrough features a unique maze layout generated using advanced algorithms. No two runs are exactly the same.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💚</div>
+                <h4>Health System</h4>
+                <p>Manage your health carefully as you encounter enemies. Take damage and you'll need to be more cautious in your approach.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h4>Immersive Audio</h4>
+                <p>Dynamic soundtrack and sound effects enhance the atmosphere. Hear enemy footsteps, weapon sounds, and environmental audio.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h4>Minimap Navigation</h4>
+                <p>Use the real-time minimap to track your progress through the maze and locate enemies, targets, and your objective.</p>
+            </div>
         </div>
     </section>
 
