@@ -1,0 +1,25 @@
+{
+  "name": "maze-escape-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for Maze Escape multiplayer game",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:security": "jest tests/security.test.js",
+    "test:load": "artillery run tests/load-test.yml"
+  },
+  "dependencies": {
+    "ws": "^8.14.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "nodemon": "^3.0.0",
+    "artillery": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
