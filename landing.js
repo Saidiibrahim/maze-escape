@@ -27,34 +27,47 @@ function init() {
   // Scene
   scene = new THREE.Scene();
 
-  // Particles
+  // Particles - adjust count based on device capabilities
   geometry = new THREE.BufferGeometry();
   const vertices = [];
-  const numParticles = 10000;
+  const colors = [];
+  const isMobile = window.innerWidth <= 768;
+  const numParticles = isMobile ? 3000 : 8000;
 
   for (let i = 0; i < numParticles; i++) {
     const x = Math.random() * 2000 - 1000;
     const y = Math.random() * 2000 - 1000;
     const z = Math.random() * 2000 - 1000;
     vertices.push(x, y, z);
+
+    // Add color variation (green to blue gradient)
+    const color = new THREE.Color();
+    color.setHSL(0.3 + Math.random() * 0.2, 1, 0.5 + Math.random() * 0.3);
+    colors.push(color.r, color.g, color.b);
   }
 
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
   material = new THREE.PointsMaterial({
-    color: 0x00ff99, // Use accent green
-    size: 2,
+    size: 3,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 0.7
+    opacity: 0.8,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending
   });
 
   particles = new THREE.Points(geometry, material);
   scene.add(particles);
 
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: true for transparent background
-  renderer.setPixelRatio(window.devicePixelRatio);
+  // Renderer - optimize settings for performance
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: !isMobile, // Disable antialiasing on mobile for better performance
+    alpha: true,
+    powerPreference: "high-performance"
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
   renderer.setSize(container.clientWidth, container.clientHeight);
   container.appendChild(renderer.domElement);
 
@@ -101,10 +114,14 @@ function render() {
   camera.position.y += (-mouseY - camera.position.y) * 0.01;
   camera.lookAt(scene.position); // Keep camera focused on the center
 
-  // Rotate particles
+  // Enhanced particle animation with multiple rotation axes
   if (particles) {
-      particles.rotation.x = time * 0.5;
-      particles.rotation.y = time * 0.25;
+      particles.rotation.x = time * 0.3;
+      particles.rotation.y = time * 0.5;
+      particles.rotation.z = time * 0.1;
+      
+      // Add pulsing effect
+      particles.material.opacity = 0.6 + Math.sin(time * 3) * 0.2;
   }
 
   renderer.render(scene, camera);
