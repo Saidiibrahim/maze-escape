@@ -10,27 +10,35 @@ const testConfig = {
     ...config,
     port: 8081, // Use different port for tests
     maxConnections: 10,
-    maxRooms: 5
+    maxRooms: 5,
+    maxConnectionsPerIP: 100
 };
 
 describe('GameServer', () => {
     let gameServer;
+    const wsOpts = { headers: { origin: 'http://localhost:8000' } };
     
     beforeEach(() => {
         gameServer = new GameServer(testConfig);
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
     });
     
     afterEach(() => {
         if (gameServer) {
             gameServer.stop();
         }
+        console.log.mockRestore();
+        console.warn.mockRestore();
+        console.error.mockRestore();
     });
     
     test('server starts on specified port', (done) => {
         gameServer.start(testConfig.port);
         
         // Try to connect
-        const ws = new WebSocket(`ws://localhost:${testConfig.port}`);
+        const ws = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         ws.on('open', () => {
             expect(ws.readyState).toBe(WebSocket.OPEN);
@@ -46,7 +54,7 @@ describe('GameServer', () => {
     test('server sends welcome message on connection', (done) => {
         gameServer.start(testConfig.port);
         
-        const ws = new WebSocket(`ws://localhost:${testConfig.port}`);
+        const ws = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         ws.on('message', (data) => {
             const message = JSON.parse(data);
@@ -65,7 +73,7 @@ describe('GameServer', () => {
         
         // Fill up to connection limit
         for (let i = 0; i < testConfig.maxConnections; i++) {
-            const ws = new WebSocket(`ws://localhost:${testConfig.port}`);
+            const ws = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
             connections.push(ws);
             await new Promise(resolve => ws.on('open', resolve));
         }
@@ -91,7 +99,7 @@ describe('GameServer', () => {
     test('server removes player on disconnect', (done) => {
         gameServer.start(testConfig.port);
         
-        const ws = new WebSocket(`ws://localhost:${testConfig.port}`);
+        const ws = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         let playerId;
         
         ws.on('message', (data) => {
