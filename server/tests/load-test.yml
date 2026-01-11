@@ -1,0 +1,35 @@
+config:
+  target: "ws://localhost:8080"
+  phases:
+    - name: warmup
+      duration: 10
+      arrivalRate: 1
+    - name: ramp
+      duration: 20
+      arrivalRate: 3
+  variables:
+    roomId: "load_room"
+
+scenarios:
+  - name: join, stream position at 10Hz, leave
+    engine: ws
+    flow:
+      - think: 0.5
+      - send:
+          json:
+            type: "join_room"
+            roomId: "{{ roomId }}"
+            playerName: "LoadUser-{{ $uuid }}"
+      - loop:
+          - send:
+              json:
+                type: "player_position"
+                position: { x: 0, y: 10, z: 0 }
+                rotation: { x: 0, y: 0, z: 0 }
+                timestamp: "{{ $timestamp }}"
+          - think: 0.1   # ~10 Hz
+        count: 50
+      - send:
+          json:
+            type: "leave_room"
+

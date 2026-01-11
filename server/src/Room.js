@@ -154,7 +154,7 @@ class Room {
      */
     shouldCleanup(idleTimeout) {
         return this.players.size === 0 && 
-               (Date.now() - this.lastActivity) > idleTimeout;
+               (Date.now() - this.lastActivity) >= idleTimeout;
     }
     
     /**

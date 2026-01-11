@@ -1,0 +1,25 @@
+# maze-escape Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-09-22
+
+## Active Technologies
+- Client JavaScript (ES modules, Three.js); Server Node.js ≥14 (CommonJS) + Frontend: Three.js (import map in `index.html`); Backend: `ws`, `dotenv`; Dev: `jest`, `nodemon`, `artillery` (001-we-re-building)
+
+## Project Structure
+```
+backend/
+frontend/
+tests/
+```
+
+## Commands
+npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] npm run lint
+
+## Code Style
+Client JavaScript (ES modules, Three.js); Server Node.js ≥14 (CommonJS): Follow standard conventions
+
+## Recent Changes
+- 001-we-re-building: Added Client JavaScript (ES modules, Three.js); Server Node.js ≥14 (CommonJS) + Frontend: Three.js (import map in `index.html`); Backend: `ws`, `dotenv`; Dev: `jest`, `nodemon`, `artillery`
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

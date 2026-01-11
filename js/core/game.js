@@ -27,6 +27,7 @@ import { checkSphereWallCollision } from '../utils/collision.js'; // Might use l
 
 // Multiplayer
 import { initMultiplayer, updateMultiplayer, notifyPlayerShot, isMultiplayer, getRemotePlayersMap } from '../multiplayer/manager.js';
+import { stableHash } from '../utils/seed.js';
 import { updateNameTags } from '../multiplayer/remotePlayer.js';
 
 // Game state variables
@@ -73,7 +74,9 @@ export function initGame() {
 
     // --- Maze Creation ---
     walls = []; // Ensure walls array is clear before maze creation
-    const mazeData = createMaze(scene, walls, wallMaterial, wallTexture);
+    // Derive deterministic seed from roomId when connected; fallback to 'default'
+    const roomId = (window.__LAST_ROOM_ID__ || 'default');
+    const mazeData = createMaze(scene, walls, wallMaterial, wallTexture, { roomId });
     spawnCells = mazeData.spawnCells;
     freeCellIndices = mazeData.freeCellIndices;
     exitPosition = mazeData.exitPosition;
@@ -118,6 +121,10 @@ export function initGame() {
         onConnected: () => {
             console.log("Connected to multiplayer");
             updateConnectionStatus(true);
+        },
+        onGameState: (state) => {
+            // Rebuild maze deterministically when joining a room
+            window.__LAST_ROOM_ID__ = state.roomId;
         },
         onDisconnected: () => {
             console.log("Disconnected from multiplayer");

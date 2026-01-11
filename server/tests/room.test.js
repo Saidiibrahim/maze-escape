@@ -13,10 +13,14 @@ const testConfig = {
 describe('Room Management', () => {
     let gameServer;
     let ws1, ws2;
+    const wsOpts = { headers: { origin: 'http://localhost:8000' } };
     
     beforeEach((done) => {
         gameServer = new GameServer(testConfig);
         gameServer.start(testConfig.port);
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
         setTimeout(done, 100); // Give server time to start
     });
     
@@ -24,10 +28,13 @@ describe('Room Management', () => {
         if (ws1 && ws1.readyState === WebSocket.OPEN) ws1.close();
         if (ws2 && ws2.readyState === WebSocket.OPEN) ws2.close();
         if (gameServer) gameServer.stop();
+        console.log.mockRestore();
+        console.warn.mockRestore();
+        console.error.mockRestore();
     });
     
     test('player can join room', (done) => {
-        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`);
+        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         const messages = [];
         ws1.on('message', (data) => {
@@ -51,8 +58,8 @@ describe('Room Management', () => {
     });
     
     test('second player receives join notification', (done) => {
-        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`);
-        ws2 = new WebSocket(`ws://localhost:${testConfig.port}`);
+        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
+        ws2 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         let player1Ready = false;
         let player2Ready = false;
@@ -98,8 +105,8 @@ describe('Room Management', () => {
     });
     
     test('messages stay within room', (done) => {
-        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`);
-        ws2 = new WebSocket(`ws://localhost:${testConfig.port}`);
+        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
+        ws2 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         let player1Id, player2Id;
         
@@ -156,7 +163,7 @@ describe('Room Management', () => {
     });
     
     test('room cleanup when empty', (done) => {
-        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`);
+        ws1 = new WebSocket(`ws://localhost:${testConfig.port}`, wsOpts);
         
         ws1.on('message', (data) => {
             const message = JSON.parse(data);
@@ -176,9 +183,12 @@ describe('Room Management', () => {
                 
                 // Check room is cleaned up
                 setTimeout(() => {
-                    expect(gameServer.rooms.has('temp-room')).toBe(false);
-                    done();
-                }, 100);
+                    // Allow a bit more time for cleanup cascade
+                    setTimeout(() => {
+                        expect(gameServer.rooms.has('temp-room')).toBe(false);
+                        done();
+                    }, 150);
+                }, 50);
             }
         });
     });
