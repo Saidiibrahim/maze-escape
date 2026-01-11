@@ -9,6 +9,7 @@ import {
   WALL_THICKNESS,
   MAIN_LAYER
 } from '../core/constants.js';
+import { prngFromString } from '../utils/seed.js';
 
 /**
  * Generates the maze structure using recursive backtracking.
@@ -16,7 +17,7 @@ import {
  * @param {number} cols - Number of columns in the maze.
  * @returns {{verticalWalls: boolean[][], horizontalWalls: boolean[][]}} - Grid indicating wall presence.
  */
-function generateMazeStructure(rows, cols) {
+function generateMazeStructure(rows, cols, rng = Math.random) {
   const verticalWalls = Array.from({ length: rows }, () => Array(cols + 1).fill(true));
   const horizontalWalls = Array.from({ length: rows + 1 }, () => Array(cols).fill(true));
   const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
@@ -35,7 +36,7 @@ function generateMazeStructure(rows, cols) {
     if (c < cols - 1 && !visited[r][c + 1]) neighbors.push({ r, c: c + 1, dir: 'E' });
 
     if (neighbors.length) {
-      const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+      const next = neighbors[Math.floor(rng() * neighbors.length)];
       // Remove wall between current and next cell
       if (next.dir === 'N') horizontalWalls[r][c] = false;
       else if (next.dir === 'S') horizontalWalls[r + 1][c] = false;
@@ -60,8 +61,10 @@ function generateMazeStructure(rows, cols) {
  * @param {THREE.Texture} wallTexture - The base texture for walls (used for cloning).
  * @returns {{spawnCells: {x: number, z: number}[], freeCellIndices: number[], exitPosition: THREE.Vector3}} - Calculated maze data.
  */
-export function createMaze(scene, wallsArray, wallTextureMaterial, wallTexture) {
-  const { verticalWalls, horizontalWalls } = generateMazeStructure(MAZE_ROWS, MAZE_COLS);
+export function createMaze(scene, wallsArray, wallTextureMaterial, wallTexture, options = {}) {
+  const roomId = options.roomId || 'default';
+  const rng = prngFromString(roomId);
+  const { verticalWalls, horizontalWalls } = generateMazeStructure(MAZE_ROWS, MAZE_COLS, rng);
   const offsetX = -MAZE_COLS * CELL_SIZE / 2;
   const offsetZ = -MAZE_ROWS * CELL_SIZE / 2;
 
