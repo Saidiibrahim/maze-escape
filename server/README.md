@@ -36,6 +36,12 @@ npm start
 
 The server will start on `ws://localhost:8080` by default.
 
+4. (Optional) Configure environment variables by copying the example file:
+```bash
+cp .env.example .env
+```
+Then edit `.env` to override defaults like `PORT`, `ALLOWED_ORIGINS`, and limits.
+
 ### Development Mode
 
 To run with auto-restart on file changes:
@@ -275,6 +281,7 @@ server/
 │   ├── RateLimiter.js     # Rate limiting
 │   └── config.js          # Configuration
 ├── tests/                 # Test files
+│   └── load-test.yml      # Artillery load test scenario (npm run test:load)
 ├── package.json
 └── README.md
 ```
