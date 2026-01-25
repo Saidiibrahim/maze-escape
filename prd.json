@@ -1,0 +1,17 @@
+{
+  "name": "maze-escape-changelog",
+  "userStories": [
+    {
+      "id": "changelog",
+      "category": "functional",
+      "description": "Create a CHANGELOG.md file documenting the major features and recent changes to the maze-escape project. Review the codebase to understand what features exist.",
+      "steps": [
+        "CHANGELOG.md exists in the root directory",
+        "Lists major features like maze generation, shooting mechanics, enemy AI, minimap",
+        "Uses proper markdown formatting with headers and bullet points"
+      ],
+      "passes": false,
+      "priority": 1
+    }
+  ]
+}
