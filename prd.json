@@ -10,7 +10,7 @@
         "Lists major features like maze generation, shooting mechanics, enemy AI, minimap",
         "Uses proper markdown formatting with headers and bullet points"
       ],
-      "passes": false,
+      "passes": true,
       "priority": 1
     }
   ]

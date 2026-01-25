@@ -1,0 +1,8 @@
+{
+  "status": "running",
+  "current_iteration": 1,
+  "max_iterations": 5,
+  "tasks_completed": 0,
+  "tasks_total": 1,
+  "current_task": "changelog"
+}
